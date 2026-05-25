@@ -34,3 +34,4 @@ Thumbs.db
 # Chalice specific
 .chalice/config.json # Optional: usually kept, but sometimes ignored if local-only secrets are here. Keeping it tracked by default.
 .chalice/deployed.json
+backend/tests/.env.test

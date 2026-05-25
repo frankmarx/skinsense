@@ -5,7 +5,8 @@ from contextlib import contextmanager
 from dotenv import load_dotenv
 
 # Load .env to ensure DATABASE_URL is available for the engine
-load_dotenv(override=True)
+# override=False ensures that if DATABASE_URL is already set (e.g., by test suite), it won't be overwritten by .env
+load_dotenv(override=False)
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
@@ -40,5 +41,4 @@ def init_db():
     Initializes the database by creating all tables defined in the Base metadata.
     """
     # Import models here to ensure they are registered with Base before create_all
-    from chalicelib.models import Price
     Base.metadata.create_all(bind=engine)
