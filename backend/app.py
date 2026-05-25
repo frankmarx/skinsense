@@ -2,7 +2,7 @@ from chalice import Chalice, CORSConfig
 from dotenv import load_dotenv
 import os
 from chalicelib.db import init_db
-from scheduled_events.price_sync import register_scheduled_events
+from chalicelib.scheduled_events.csfloat_events import register_scheduled_events
 from routes.admin import register_admin_routes
 
 # Load .env from the backend directory and override existing environment variables

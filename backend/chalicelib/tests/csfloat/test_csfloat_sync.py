@@ -4,7 +4,7 @@ from datetime import date
 from sqlalchemy import select
 from chalicelib.db import get_db
 from chalicelib.models import ItemMaster, ItemDayListing
-from backend.chalicelib.loaders.csfloat_loader import populate_csfloat_item_listings
+from chalicelib.loaders.csfloat.load_item_listings import CSFloatListingLoader
 from csfloat.schemas import Listing
 
 # --- SAMPLE DATA ---
@@ -26,7 +26,11 @@ def test_populate_new_items(db_session):
     """
     # Mock the API call to return our sample data
     with patch('chalicelib.services.csfloat_service.get_item_listings', return_value=SAMPLE_LISTINGS):
-        result = populate_csfloat_item_listings()
+        loader = CSFloatListingLoader(jobid="test-sync", datasource_id="1")
+        raw_data = loader.extract()
+        loader.bronze_load(raw_data)
+        result = loader.silver_transform()
+
         
         assert result["status"] == "success"
         assert result["processed_items"] == 2
@@ -61,7 +65,11 @@ def test_populate_existing_items(db_session):
 
     # 2. Run the population logic with mocked API
     with patch('chalicelib.services.csfloat_service.get_item_listings', return_value=SAMPLE_LISTINGS):
-        result = populate_csfloat_item_listings()
+        loader = CSFloatListingLoader(jobid="test-sync", datasource_id="1")
+        raw_data = loader.extract()
+        loader.bronze_load(raw_data)
+        result = loader.silver_transform()
+
         
         assert result["status"] == "success"
         
