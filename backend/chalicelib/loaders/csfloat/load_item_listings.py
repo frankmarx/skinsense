@@ -25,7 +25,7 @@ class CSFloatListingLoader(FeedLoader):
                 job_id=self.jobid,
                 market_hash_name=listing.market_hash_name,
                 quantity=listing.quantity,
-                min_price=listing.min_price
+                min_price=listing.price
             )
             for listing in raw_data
         ]

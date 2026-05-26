@@ -22,7 +22,6 @@ class ItemListingDetail(Base):
     is_souvenir = Column(Boolean)
 
     __table_args__ = (
-        {'schema': 'skinsense'},
         ForeignKeyConstraint(
             ['item_id'],
             ['skinsense.item_master.item_id'],
@@ -31,6 +30,7 @@ class ItemListingDetail(Base):
             ['datasource_id'],
             ['skinsense.datasource.datasource_id'],
         ),
+        {'schema': 'skinsense'},
     )
 
     item = relationship("ItemMaster", back_populates="listing_details")

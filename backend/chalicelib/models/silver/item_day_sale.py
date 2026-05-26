@@ -13,7 +13,6 @@ class ItemDaySales(Base):
     min_price = Column(Float)
 
     __table_args__ = (
-        {'schema': 'skinsense'},
         ForeignKeyConstraint(
             ['item_id'],
             ['skinsense.item_master.item_id'],
@@ -22,6 +21,7 @@ class ItemDaySales(Base):
             ['datasource_id'],
             ['skinsense.datasource.datasource_id'],
         ),
+        {'schema': 'skinsense'},
     )
 
 

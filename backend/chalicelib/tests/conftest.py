@@ -18,9 +18,7 @@ def setup_database():
 
 @pytest.fixture(autouse=True)
 def cleanup_database():
-    """Truncate all tables after each individual test."""
-    yield  # Test runs here
-    
+    """Truncate all tables before each individual test."""
     with engine.connect() as conn:
         # Disable foreign key checks for truncation if necessary,
         # or use CASCADE to handle dependencies.
@@ -28,5 +26,9 @@ def cleanup_database():
         # TRUNCATE might behave slightly differently.
         for table in reversed(Base.metadata.sorted_tables):
             # Using 'CASCADE' ensures dependent records are deleted
-            conn.execute(text(f"TRUNCATE TABLE {table.name} RESTART IDENTITY CASCADE;"))
+            schema = table.schema if table.schema else 'public'
+            conn.execute(text(f"TRUNCATE TABLE {schema}.{table.name} RESTART IDENTITY CASCADE;"))
         conn.commit()
+    
+    yield  # Test runs here
+
