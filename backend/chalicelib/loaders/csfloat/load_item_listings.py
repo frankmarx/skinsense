@@ -59,7 +59,6 @@ class CSFloatListingLoader(FeedLoader):
         # Resolve items (Destination 1: ItemMaster)
         item_map = bulk_get_or_create_items(
             db=db, 
-            datasource_id=self.datasource_id, 
             items_data=items_to_resolve
         )
 

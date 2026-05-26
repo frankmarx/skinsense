@@ -3,6 +3,7 @@ from chalicelib.db import Base
 
 class CSFloatListingDetail(Base):
     __tablename__ = 'csfloat_listing_detail'
+    __table_args__ = {'schema': 'skinsense'}
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     job_id = Column(String)

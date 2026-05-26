@@ -2,7 +2,7 @@ from chalicelib.db import Base
 from chalicelib.models.common.datasource import Datasource
 from chalicelib.models.common.feed_loader_log import FeedLoaderLog
 from chalicelib.models.silver.item_master import ItemMaster
-from chalicelib.models.silver.item_day_sales import ItemDaySales
+from backend.chalicelib.models.silver.item_day_sale import ItemDaySales
 from chalicelib.models.silver.item_day_listing import ItemDayListing
 from chalicelib.models.silver.item_listing_detail import ItemListingDetail
 from chalicelib.models.bronze.csfloat_listing import CSFloatListing

@@ -13,15 +13,16 @@ class ItemDayListing(Base):
     min_price = Column(Float)
 
     __table_args__ = (
+        {'schema': 'skinsense'},
         ForeignKeyConstraint(
-            ['item_id', 'datasource_id'],
-            ['item_master.item_id', 'item_master.datasource_id'],
+            ['item_id'],
+            ['skinsense.item_master.item_id'],
         ),
         ForeignKeyConstraint(
             ['datasource_id'],
-            ['datasource.datasource_id'],
+            ['skinsense.datasource.datasource_id'],
         ),
     )
 
     item = relationship("ItemMaster", back_populates="day_listings")
-    datasource = relationship("Datasource")
+    datasource = relationship("Datasource", back_populates="day_listings")

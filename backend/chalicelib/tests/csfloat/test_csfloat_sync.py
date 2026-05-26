@@ -52,7 +52,6 @@ def test_populate_existing_items(db_session):
     for l in SAMPLE_LISTINGS:
         item = ItemMaster(
             item_id="test-id-" + l.market_hash_name,
-            datasource_id="1",
             full_name=l.market_hash_name,
             item_type="Gun",
             wear="FT",
