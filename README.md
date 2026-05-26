@@ -80,9 +80,25 @@ The backend is built using **AWS Chalice**, an agile serverless microframework f
    ```bash
    chalice local --port 8000
    ```
-   *Your API will now be running and accessible at `http://127.0.0.1:8000/prices`.*
+    *Your API will now be running and accessible at `http://127.0.0.1:8000/prices`.*
+
+### Database Migrations
+
+When you change a model in `backend/chalicelib/models/`, follow these two steps:
+
+1. **Generate a migration script:**
+   ```bash
+   cd backend
+   ./venv/bin/alembic revision --autogenerate -m "description of change"
+   ```
+
+2. **Apply the migration to the database:**
+   ```bash
+   ./venv/bin/alembic upgrade head
+   ```
 
 ---
+
 
 ## 💻 Quick Start: Frontend Setup (Vite + React)
 

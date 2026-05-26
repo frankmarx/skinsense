@@ -1,12 +1,14 @@
 from chalice import Chalice, CORSConfig
 from dotenv import load_dotenv
 import os
-from chalicelib.db import init_db
-from chalicelib.scheduled_events.csfloat_events import register_scheduled_events
-from routes.admin import register_admin_routes
 
-# Load .env from the backend directory and override existing environment variables
+# 1. Load .env immediately
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'), override=True)
+
+# 2. Now import everything else that depends on DB
+from chalicelib.db import init_db
+from chalicelib.events.csfloat_events import register_events
+from routes.admin import register_admin_routes
 
 app = Chalice(app_name='skinsense-backend')
 
@@ -21,5 +23,5 @@ app.api.cors = CORSConfig(
 init_db()
 
 # Register schedules and routes
-register_scheduled_events(app)
+register_events(app)
 register_admin_routes(app)

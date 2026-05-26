@@ -13,6 +13,8 @@ export default function App() {
   const [isDummy, setIsDummy] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name-asc'); // name-asc, name-desc, price-asc, price-desc
+  const [showAdmin, setShowAdmin] = useState(false);
+  const [logs, setLogs] = useState([]);
 
   // Toggle theme and update HTML dataset
   const toggleTheme = () => {
@@ -68,6 +70,36 @@ export default function App() {
     fetchPrices();
   }, []);
 
+  const triggerSync = async () => {
+    try {
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+      const response = await fetch(`${apiBaseUrl}/events/sync`, { method: 'POST' });
+      if (response.ok) alert('Sync triggered successfully');
+      else alert('Failed to trigger sync');
+    } catch (err) {
+      alert('Error triggering sync: ' + err.message);
+    }
+  };
+
+  const fetchLogs = async () => {
+    try {
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+      const response = await fetch(`${apiBaseUrl}/logs`);
+      const data = await response.json();
+      setLogs(data.logs);
+    } catch (err) {
+      console.error('Error fetching logs:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (showAdmin) {
+      fetchLogs();
+      const interval = setInterval(fetchLogs, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [showAdmin]);
+
   // Filter and sort prices based on search input & selection
   const filteredPrices = prices
     .filter(item => item.market_hash_name.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -118,6 +150,9 @@ export default function App() {
           </button>
 
           {/* User Placeholder */}
+          <button onClick={() => setShowAdmin(!showAdmin)} style={styles.themeButton} title="Admin Panel" aria-label="Admin Panel">
+            ⚙️
+          </button>
           <button style={styles.userButton} title="User Profile" aria-label="User Profile">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -129,44 +164,68 @@ export default function App() {
 
       {/* MAIN CONTENT */}
       <main style={styles.main}>
-        {/* Intro Dashboard Row */}
-        <section style={styles.introSection}>
-          <div>
-            <h2 style={styles.pageTitle}>CS2 Price Aggregator</h2>
-            <p style={styles.pageSubtitle}>High-fidelity marketplace index and real-time pricing analysis.</p>
-          </div>
-          
-          {/* Status Badge */}
-          <div style={styles.statusContainer}>
-            {isDummy ? (
-              <span style={{ ...styles.badge, ...styles.badgeWarning }}>
-                <span className="pulse-dot" style={styles.pulseDot}></span> Demo Mock Data
-              </span>
-            ) : (
-              <span style={{ ...styles.badge, ...styles.badgeSuccess }}>
-                ● Connected to AWS Chalice DB
-              </span>
-            )}
+        {showAdmin ? (
+          <section>
+            <h2 style={styles.pageTitle}>Admin Panel</h2>
+            <button onClick={triggerSync} style={styles.refreshButton}>Trigger Sync</button>
+            <h3 style={{marginTop: '20px'}}>Logs</h3>
+            <table style={{width: '100%', borderCollapse: 'collapse', marginTop: '10px'}}>
+              <thead>
+                <tr style={{textAlign: 'left', borderBottom: '1px solid var(--border-color)'}}>
+                  <th style={{padding: '8px'}}>Action</th>
+                  <th style={{padding: '8px'}}>Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {logs.map(log => (
+                  <tr key={log.id} style={{borderBottom: '1px solid var(--border-color)'}}>
+                    <td style={{padding: '8px'}}>{log.action}</td>
+                    <td style={{padding: '8px'}}>{new Date(log.time_logged).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        ) : (
+          <>
+          {/* Intro Dashboard Row */}
+          <section style={styles.introSection}>
+            <div>
+              <h2 style={styles.pageTitle}>CS2 Price Aggregator</h2>
+              <p style={styles.pageSubtitle}>High-fidelity marketplace index and real-time pricing analysis.</p>
+            </div>
             
-            <button onClick={fetchPrices} style={styles.refreshButton} disabled={loading}>
-              <svg 
-                className={loading ? "spinner" : ""}
-                width="14" 
-                height="14" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2.5" 
-                style={{ marginRight: '6px' }}
-              >
-                <path d="M23 4v6h-6"></path>
-                <path d="M1 20v-6h6"></path>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-              </svg>
-              {loading ? 'Refreshing...' : 'Refresh'}
-            </button>
-          </div>
-        </section>
+            {/* Status Badge */}
+            <div style={styles.statusContainer}>
+              {isDummy ? (
+                <span style={{ ...styles.badge, ...styles.badgeWarning }}>
+                  <span className="pulse-dot" style={styles.pulseDot}></span> Demo Mock Data
+                </span>
+              ) : (
+                <span style={{ ...styles.badge, ...styles.badgeSuccess }}>
+                  ● Connected to AWS Chalice DB
+                </span>
+              )}
+              
+              <button onClick={fetchPrices} style={styles.refreshButton} disabled={loading}>
+                <svg 
+                  className={loading ? "spinner" : ""}
+                  width="14" 
+                  height="14" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2.5" 
+                  style={{ marginRight: '6px' }}
+                >
+                  <path d="M23 4v6h-6"></path>
+                  <path d="M1 20v-6h6"></path>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                {loading ? 'Refreshing...' : 'Refresh'}
+              </button>
+            </div>
+          </section>
 
         {/* API Warning banner */}
         {error && (
@@ -267,6 +326,7 @@ export default function App() {
               );
             })}
           </div>
+          </>
         )}
       </main>
 

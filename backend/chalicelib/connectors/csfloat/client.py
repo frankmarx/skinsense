@@ -2,7 +2,7 @@ import os
 import requests
 from dotenv import load_dotenv
 from typing import List, Optional
-from .schemas import Listing, ListingDetail
+from chalicelib.connectors.csfloat.schemas import Listing, ListingDetail
 
 load_dotenv(override=True)
 

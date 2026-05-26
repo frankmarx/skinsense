@@ -2,7 +2,7 @@ from typing import List
 from chalicelib.db import get_db
 from chalicelib.models import CSFloatListingDetail
 from csfloat.client import get_item_listing_details # Assuming this exists
-from objects.feed_loader import FeedLoader
+from chalicelib.objects.feed_loader import FeedLoader
 
 class CSFloatListingDetailLoader(FeedLoader):
     def extract(self):

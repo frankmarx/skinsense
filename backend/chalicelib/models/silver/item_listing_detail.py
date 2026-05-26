@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Float, Date, DateTime, Boolean, Integer, ForeignKey
+from sqlalchemy import Column, String, Float, Date, DateTime, Boolean, Integer, ForeignKey, ForeignKeyConstraint
 from sqlalchemy.orm import relationship
 from chalicelib.db import Base
 
@@ -6,8 +6,8 @@ class ItemListingDetail(Base):
     __tablename__ = 'item_listing_detail'
 
     listing_id = Column(String, primary_key=True)
-    item_id = Column(String, ForeignKey('item_master.item_id'), nullable=False)
-    datasource_id = Column(String, ForeignKey('datasource.datasource_id'), nullable=False)
+    item_id = Column(String, nullable=False)
+    datasource_id = Column(String, nullable=False)
     day = Column(Date)
     
     # New requested fields
@@ -20,6 +20,17 @@ class ItemListingDetail(Base):
     float_value = Column(Float)
     is_stattrak = Column(Boolean)
     is_souvenir = Column(Boolean)
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ['item_id', 'datasource_id'],
+            ['item_master.item_id', 'item_master.datasource_id'],
+        ),
+        ForeignKeyConstraint(
+            ['datasource_id'],
+            ['datasource.datasource_id'],
+        ),
+    )
 
     item = relationship("ItemMaster", back_populates="listing_details")
     datasource = relationship("Datasource")
