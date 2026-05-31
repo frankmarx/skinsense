@@ -28,7 +28,14 @@ skinsense/
 
 ## ⚡ Quick Start: Backend Setup (Chalice)
 
-The backend is built using **AWS Chalice**, an agile serverless microframework for Python that integrates seamlessly with AWS Lambda, API Gateway, and CloudWatch Events (for scheduled cron-jobs).
+The backend is built using **AWS Chalice**, which deploys your code as a set of managed AWS resources.
+
+### Deployed AWS Resources
+When you run `chalice deploy`, the following resources are created:
+- **`skinsense-backend-dev-sync_item_listings` (Lambda Function):** A scheduled function triggered by EventBridge (CloudWatch Events) that initializes the sync process.
+- **`skinsense-backend-dev-handle_sqs_message` (Lambda Function):** The SQS consumer function. It processes sync jobs one-by-one from the queue (ensured by `batch_size=1` and queue visibility settings).
+- **`skinsense-backend-dev` (Lambda Function):** The main entry point for your REST API, handling requests from the frontend via API Gateway.
+- **`Rest API` (AWS API Gateway):** The front-door for your application, routing frontend HTTP requests to the appropriate backend Lambda functions.
 
 ### Prerequisites
 - Python 3.9, 3.10, or 3.11 installed

@@ -1,5 +1,6 @@
+import os
 from chalice import Response
-from chalicelib.events.csfloat_events import run_sync_item_listings
+from chalicelib.orchestration.sqs_helper import send_to_queue
 from chalicelib.models.common.feed_loader_log import FeedLoaderLog
 from chalicelib.db import SessionLocal
 
@@ -7,12 +8,13 @@ def register_admin_routes(app):
     @app.route('/events/sync', methods=['POST'], cors=True)
     def trigger_sync():
         """
-        Manual trigger endpoint to run the population logic.
+        Manual trigger endpoint to queue the population logic.
         """
-        result = run_sync_item_listings(app, "manual-sync")
+        queue_url = os.environ.get('SQS_QUEUE_URL')
+        send_to_queue(queue_url, {'action': 'sync_item_listings', 'job_id': 'manual-sync'})
         return Response(
-            body={"status": "Manual Sync Triggered", "result": result},
-            status_code=200,
+            body={"status": "Manual Sync Queued"},
+            status_code=202,
             headers={"Content-Type": "application/json"}
         )
 

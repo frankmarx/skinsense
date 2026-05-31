@@ -4,8 +4,8 @@ from chalicelib.db import db_transaction
 from chalicelib.models import ItemMaster, ItemDayListing, CSFloatListing
 from chalicelib.connectors.csfloat.client import get_item_listings
 from chalicelib.connectors.csfloat.schemas import Listing
-from chalicelib.helpers.csfloat_helpers import parse_market_hash_name
-from chalicelib.helpers.generic_helpers import bulk_get_or_create_items
+from chalicelib.orchestration.csfloat_helpers import parse_market_hash_name
+from chalicelib.orchestration.generic_helpers import bulk_get_or_create_items
 from chalicelib.objects.feed_loader import FeedLoader
 
 class CSFloatListingLoader(FeedLoader):

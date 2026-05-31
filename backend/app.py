@@ -7,7 +7,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '.env'), override=True)
 
 # 2. Now import everything else that depends on DB
 from chalicelib.db import init_db
-from chalicelib.events.csfloat_events import register_events
+from chalicelib.orchestration.event_registry import register_events
 from routes.admin import register_admin_routes
 
 app = Chalice(app_name='skinsense-backend')
