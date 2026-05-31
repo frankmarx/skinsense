@@ -8,11 +8,3 @@ def run_sync_item_listings(app, job_id):
     result = loader.silver_transform(raw_data)
     app.log.info(f"Sync Result: {result}")
     return result
-
-def register_events(app):
-    @app.schedule('rate(12 hours)')
-    def sync_item_listings(event):
-        """
-        AWS EventBridge trigger that runs every 12 hours.
-        """
-        return run_sync_item_listings(app, event.get('id', 'scheduled-sync'))
