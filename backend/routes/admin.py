@@ -1,7 +1,8 @@
 import os
+import uuid
 from chalice import Response
-from chalicelib.orchestration.sqs_helper import send_to_queue
-from chalicelib.models.common.feed_loader_log import FeedLoaderLog
+from chalicelib.orchestration.sqs_registry import send_to_queue
+from chalicelib.models import JobLogDetails
 from chalicelib.db import SessionLocal
 
 def register_admin_routes(app):
@@ -10,8 +11,14 @@ def register_admin_routes(app):
         """
         Manual trigger endpoint to queue the population logic.
         """
-        queue_url = os.environ.get('SQS_QUEUE_URL')
-        send_to_queue(queue_url, {'action': 'sync_item_listings', 'job_id': 'manual-sync'})
+        action = 'sync_item_listings'
+        send_to_queue({
+            'action': action, 
+            'job_details': {
+                'job_id': f"{action}-manual-{uuid.uuid4()}",
+                'event_name': action
+            }
+        })
         return Response(
             body={"status": "Manual Sync Queued"},
             status_code=202,
@@ -24,17 +31,18 @@ def register_admin_routes(app):
         Endpoint to retrieve the last 100 logs.
         """
         with SessionLocal() as db:
-            logs = db.query(FeedLoaderLog).order_by(FeedLoaderLog.time_logged.desc()).limit(100).all()
+            logs = db.query(JobLogDetails).order_by(JobLogDetails.job_start_time.desc()).limit(100).all()
             
             log_data = []
             for log in logs:
                 log_data.append({
                     "id": log.id,
-                    "jobid": log.jobid,
-                    "datasource_id": log.datasource_id,
-                    "feed_name": log.feed_name,
-                    "action": log.action,
-                    "time_logged": log.time_logged.isoformat()
+                    "job_id": log.job_id,
+                    "data_source_id": log.data_source_id,
+                    "event_name": log.event_name,
+                    "status": log.status,
+                    "job_start_time": log.job_start_time.isoformat() if log.job_start_time else None,
+                    "job_end_time": log.job_end_time.isoformat() if log.job_end_time else None
                 })
             
             return Response(
@@ -42,3 +50,4 @@ def register_admin_routes(app):
                 status_code=200,
                 headers={"Content-Type": "application/json"}
             )
+

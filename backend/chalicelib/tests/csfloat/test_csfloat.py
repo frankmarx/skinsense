@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from chalicelib.orchestration.csfloat_events import run_sync_item_listings
+from chalicelib.event_definition.csfloat_events import run_sync_item_listings
 from chalicelib.connectors.csfloat import client as csfloat_client
 from chalicelib.connectors.csfloat.schemas import Listing
 from sqlalchemy import select

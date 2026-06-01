@@ -32,8 +32,8 @@ The backend is built using **AWS Chalice**, which deploys your code as a set of 
 
 ### Deployed AWS Resources
 When you run `chalice deploy`, the following resources are created:
-- **`skinsense-backend-dev-sync_item_listings` (Lambda Function):** A scheduled function triggered by EventBridge (CloudWatch Events) that initializes the sync process.
-- **`skinsense-backend-dev-handle_sqs_message` (Lambda Function):** The SQS consumer function. It processes sync jobs one-by-one from the queue (ensured by `batch_size=1` and queue visibility settings).
+- **`skinsense-backend-dev-master_scheduler_twice_daily` (Lambda Function):** A single orchestrator function triggered by EventBridge (CloudWatch Events) that queues multiple batch jobs.
+- **`skinsense-backend-dev-handle_sqs_message` (Lambda Function):** The centralized SQS consumer function. It pulls jobs from the queue one-by-one using `batch_size=1` and dispatches them via the `COMMAND_REGISTRY`.
 - **`skinsense-backend-dev` (Lambda Function):** The main entry point for your REST API, handling requests from the frontend via API Gateway.
 - **`Rest API` (AWS API Gateway):** The front-door for your application, routing frontend HTTP requests to the appropriate backend Lambda functions.
 

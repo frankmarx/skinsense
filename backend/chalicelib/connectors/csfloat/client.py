@@ -77,3 +77,23 @@ def get_item_listing_details(market_hash_name: str) -> List[ListingDetail]:
             break
 
     return all_listings
+
+
+def test_connection():
+    """
+    Tests the connection to the CSFloat API by hitting the price-list endpoint.
+    """
+    if not CSFLOAT_API_KEY:
+        return {"status": "error", "message": "API Key not set"}
+
+    headers = {
+        "Authorization": f"ApiKey {CSFLOAT_API_KEY}",
+        "User-Agent": "Skinsense-Price-Aggregator/1.0"
+    }
+
+    try:
+        response = requests.get(CSFLOAT_PRICE_LIST_URL, headers=headers)
+        response.raise_for_status()
+        return {"status": "success", "status_code": response.status_code}
+    except requests.exceptions.RequestException as e:
+        return {"status": "error", "message": str(e)}
