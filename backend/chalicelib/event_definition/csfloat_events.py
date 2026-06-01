@@ -1,7 +1,7 @@
 from chalicelib.loaders.csfloat.load_item_listings import CSFloatListingLoader
 from chalicelib.connectors.csfloat.client import test_connection
 
-def run_item_listings(app, job_id):
+def run_sync_item_listings(app, job_id):
     app.log.info(f"Starting price sync... job_id: {job_id}")
     loader = CSFloatListingLoader(jobid=job_id, datasource_id="1")
     raw_data = loader.extract()

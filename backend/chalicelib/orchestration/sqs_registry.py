@@ -23,8 +23,23 @@ def register_sqs_queue(app):
             
             handler = COMMAND_REGISTRY.get(action)
             if handler:
-                app.log.info(f"Executing job: {action} with ID: {details.get('job_id')}")
-                handler(app, details.get('job_id'))
+                job_id = details.get('job_id')
+                app.log.info(f"Executing job: {action} with ID: {job_id}")
+                # Log entry for job_log_details
+                from chalicelib.db import SessionLocal
+                from chalicelib.models.common.job_log_details import JobLogDetails
+                
+                with SessionLocal() as db:
+                    log = JobLogDetails(
+                        job_id=job_id,
+                        data_source_id=details.get('data_source_id', '1'),
+                        event_name=action,
+                        status='IN_PROGRESS'
+                    )
+                    db.add(log)
+                    db.commit()
+
+                handler(app, job_id)
             else:
                 app.log.error(f"No handler found for action: {action}")
 
