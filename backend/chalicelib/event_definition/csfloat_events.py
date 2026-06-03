@@ -1,7 +1,7 @@
 from chalicelib.loaders.csfloat.load_item_listings import CSFloatListingLoader
 from chalicelib.connectors.csfloat.client import test_connection
 
-def run_sync_item_listings(app, job_id, logger):
+def run_sqs_consumer(app, job_id, logger):
     app.log.info(f"Starting price sync... job_id: {job_id}")
     
     try:

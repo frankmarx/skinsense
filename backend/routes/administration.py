@@ -4,20 +4,19 @@ from chalicelib.orchestration.sqs_registry import send_to_queue
 from chalicelib.models import JobLogDetails
 from chalicelib.db import SessionLocal
 
-def trigger_sync_logic():
-    action = 'cs_float_item_listings'
+def trigger_sync_logic(action='cs_float_item_listings'):
+    # Generate a unique event_id since it is a manual trigger
+    event_id = str(uuid.uuid4())
     send_to_queue({
         'action': action, 
-        'job_details': {
-            'job_id': f"{action}-manual-{uuid.uuid4()}",
-            'event_name': action
-        }
+        'event_id': event_id
     })
     return Response(
-        body={"status": "Manual Sync Queued"},
+        body={"status": f"Manual {action} Queued", "event_id": event_id},
         status_code=202,
         headers={"Content-Type": "application/json"}
     )
+
 
 def get_logs_logic():
     with SessionLocal() as db:

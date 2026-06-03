@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from chalicelib.event_definition.csfloat_events import run_sync_item_listings
+from chalicelib.event_definition.csfloat_events import run_sqs_consumer
 from chalicelib.connectors.csfloat import client as csfloat_client
 from chalicelib.connectors.csfloat.schemas import Listing
 from sqlalchemy import select
@@ -26,9 +26,9 @@ def mock_app():
     app.log = MagicMock()
     return app
 
-def test_run_sync_item_listings_success(mock_app, db_session):
+def test_run_sqs_consumer_success(mock_app, db_session):
     """
-    Tests that run_sync_item_listings successfully extracts, 
+    Tests that run_sqs_consumer successfully extracts, 
     loads into bronze, and transforms into silver.
     """
     # Patch the CSFloat client to return sample listings
@@ -39,7 +39,7 @@ def test_run_sync_item_listings_success(mock_app, db_session):
         db_session.commit()
         
         job_id = "test-job-123"
-        result = run_sync_item_listings(mock_app, job_id)
+        result = run_sqs_consumer(mock_app, job_id)
         
         # Verify result
         assert result["status"] == "success"

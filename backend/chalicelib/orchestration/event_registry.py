@@ -45,9 +45,9 @@ def trigger_event(event, group_name, action_desc):
 
 def trigger_jobs(group_name, event_id):
     jobs = SCHEDULE_GROUPS.get(group_name, [])
-    for action in jobs:
+    for event in jobs:
         send_to_queue({
-            'action': action,
+            'event': event,
             'event_id': event_id
         })
 

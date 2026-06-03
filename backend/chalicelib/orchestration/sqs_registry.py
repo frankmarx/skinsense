@@ -3,13 +3,13 @@ import boto3
 import json
 import os
 import uuid
-from chalicelib.event_definition.csfloat_events import run_sync_item_listings, run_test_connection
+from chalicelib.event_definition.csfloat_events import run_sqs_consumer, run_test_connection
 from chalicelib.orchestration.logging import JobDetailLogger
 
 # Command Registry for the SQS Consumer
 COMMAND_REGISTRY = {
     'cs_float_item_listings': {
-        'function': run_sync_item_listings,
+        'function': run_sqs_consumer,
         'data_source_id': '1'
     },
     'cs_float_test_connection': {
@@ -25,10 +25,10 @@ sqs = boto3.client('sqs')
 def register_sqs_queue(app):
         # SQS Consumer
     @app.on_sqs_message(queue=os.environ.get('SQS_QUEUE_NAME'), batch_size=1)
-    def handle_sqs_message(event):
+    def sqs_consumer(event):
         for record in event:
             message = json.loads(record.body)
-            event_name = message.get('action')
+            event_name = message.get('event')
             event_id = message.get('event_id')
             
             # For logging purposes, we still need a job_id. 
