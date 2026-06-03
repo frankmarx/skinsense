@@ -1,11 +1,21 @@
+import datetime
 import boto3
 import json
 import os
-from chalicelib.event_definition.csfloat_events import run_sync_item_listings
+import uuid
+from chalicelib.event_definition.csfloat_events import run_sync_item_listings, run_test_connection
+from chalicelib.orchestration.logging import JobDetailLogger
 
 # Command Registry for the SQS Consumer
 COMMAND_REGISTRY = {
-    'cs_float_item_listings': run_sync_item_listings,
+    'cs_float_item_listings': {
+        'function': run_sync_item_listings,
+        'data_source_id': '1'
+    },
+    'cs_float_test_connection': {
+        'function': run_test_connection,
+        'data_source_id': '1'
+    }
 }
 # Default queue configuration
 QUEUE_URL = os.environ.get('SQS_QUEUE_URL')
@@ -18,30 +28,35 @@ def register_sqs_queue(app):
     def handle_sqs_message(event):
         for record in event:
             message = json.loads(record.body)
-            action = message.get('action')
-            details = message.get('job_details', {})
+            event_name = message.get('action')
+            event_id = message.get('event_id')
             
-            handler = COMMAND_REGISTRY.get(action)
-            if handler:
-                job_id = details.get('job_id')
-                app.log.info(f"Executing job: {action} with ID: {job_id}")
-                # Log entry for job_log_details
-                from chalicelib.db import SessionLocal
-                from chalicelib.models.common.job_log_details import JobLogDetails
-                
-                with SessionLocal() as db:
-                    log = JobLogDetails(
-                        job_id=job_id,
-                        data_source_id=details.get('data_source_id', '1'),
-                        event_name=action,
-                        status='IN_PROGRESS'
-                    )
-                    db.add(log)
-                    db.commit()
+            # For logging purposes, we still need a job_id. 
+            # We will use event_id if no specific job_id is present, 
+            # or generate one here to maintain the JobDetailLogger interface.
+            job_id = event_id if event_id else str(uuid.uuid4())
+            
+            event_cfg = COMMAND_REGISTRY.get(event_name)
 
-                handler(app, job_id)
+            
+            event_cfg = COMMAND_REGISTRY.get(event_name)
+            handler = event_cfg.get('function') if event_cfg else None
+            data_source_id = event_cfg.get('data_source_id') if event_cfg else 'unknown'
+            
+            if handler:
+                app.log.info(f"Executing job: {event_name} with ID: {job_id}")
+                
+                # Use JobDetailLogger
+                logger = JobDetailLogger(job_id=job_id, data_source_id=data_source_id, event_name=event_name)
+                
+                try:
+                    # Pass the logger to the handler
+                    handler(app, job_id, logger)
+                except Exception as e:
+                    app.log.error(f"Job {job_id} failed: {e}")
             else:
-                app.log.error(f"No handler found for action: {action}")
+
+                app.log.error(f"No handler found for action: {event_name}")
 
 def send_to_queue(message_body, queue_url=None):
     """Sends a message to an SQS queue."""

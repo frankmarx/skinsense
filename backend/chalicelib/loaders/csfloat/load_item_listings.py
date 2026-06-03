@@ -6,12 +6,13 @@ from chalicelib.connectors.csfloat.client import get_item_listings
 from chalicelib.connectors.csfloat.schemas import Listing
 from chalicelib.event_definition.helpers.csfloat_helpers import parse_market_hash_name
 from chalicelib.event_definition.helpers.generic_helpers import bulk_get_or_create_items
-from chalicelib.objects.feed_loader import FeedLoader
+from chalicelib.loaders.feed_loader import FeedLoader
 
 class CSFloatListingLoader(FeedLoader):
     def extract(self):
+        self.logger.create_log_entry(status='Extracting')
         listings: list[Listing] = get_item_listings()
-        self.log(f"Extracted {len(listings) if listings else 0} listings from CSFloat")
+        self.logger.update_log_entry(status='Extracting', success=True)
         return listings
 
     @db_transaction
@@ -19,6 +20,7 @@ class CSFloatListingLoader(FeedLoader):
         if not raw_data:
             return []
         
+        self.logger.create_log_entry(status='Loading Bronze')
         # Load into CSFloatListing bronze table
         bronze_records = [
             CSFloatListing(
@@ -30,12 +32,12 @@ class CSFloatListingLoader(FeedLoader):
             for listing in raw_data
         ]
         db.add_all(bronze_records)
-        
-        self.log(f"Loaded {len(raw_data)} records into cs_float_listing bronze table.")
+        self.logger.update_log_entry(status='Loading Bronze', success=True)
         return raw_data
 
     @db_transaction
     def silver_transform(self, raw_data, db=None):
+        self.logger.create_log_entry(status='Transforming Silver')
         # Source: Bronze table
         bronze_records = db.query(CSFloatListing).filter(
             CSFloatListing.job_id == self.jobid
@@ -61,13 +63,13 @@ class CSFloatListingLoader(FeedLoader):
             db=db, 
             items_data=items_to_resolve
         )
-
+ 
         # Prepare for Destination 2: ItemDayListing
         listing_values = []
         for listing in bronze_records:
             item_id = item_map.get(listing.market_hash_name)
             if not item_id: continue
-
+ 
             listing_values.append({
                 "item_id": item_id,
                 "datasource_id": self.datasource_id,
@@ -75,7 +77,7 @@ class CSFloatListingLoader(FeedLoader):
                 "listings_count": listing.quantity,
                 "min_price": listing.min_price
             })
-
+ 
         if listing_values:
             listing_stmt = pg_insert(ItemDayListing).values(listing_values)
             upsert_listing = listing_stmt.on_conflict_do_update(
@@ -87,6 +89,7 @@ class CSFloatListingLoader(FeedLoader):
             )
             db.execute(upsert_listing)
         
-        self.log(f"Processed {len(raw_data)} listings from bronze to silver.")
+        self.logger.update_log_entry(status='Transforming Silver', success=True)
         return {"status": "success", "processed_items": len(raw_data)}
+
 

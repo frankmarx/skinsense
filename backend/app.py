@@ -14,6 +14,7 @@ from chalicelib.orchestration.sqs_registry import register_sqs_queue
 from chalicelib.db import init_db
 from chalicelib.orchestration.event_registry import register_events
 from routes.admin import register_admin_routes
+from routes.skin_data import get_item_master
 
 app = Chalice(app_name='skinsense-backend')
 
@@ -31,3 +32,7 @@ init_db()
 register_events(app)
 register_sqs_queue(app)
 register_admin_routes(app)
+
+@app.route('/skin-data/items', methods=['GET'], cors=True)
+def get_items():
+    return get_item_master()
