@@ -13,8 +13,8 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '.env'), override=True)
 from chalicelib.orchestration.sqs_registry import register_sqs_queue
 from chalicelib.db import init_db
 from chalicelib.orchestration.event_registry import register_events
-from routes.admin import register_admin_routes
-from routes.skin_data import get_item_master
+from chalicelib.routes.admin import register_admin_routes
+from chalicelib.routes.skin_data import get_item_master
 
 app = Chalice(app_name='skinsense-backend')
 

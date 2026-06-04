@@ -7,7 +7,7 @@
       "environment_variables": {
         "DATABASE_URL": "",
         "SQS_QUEUE_NAME": "skinsense-job-queue",
-        "SQS_QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/123456789012/skinsense-job-queue"
+        "SQS_QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/538712952225/skinsense-job-queue"
       },
       "lambda_functions": {
         "handle_sqs_message": {
