@@ -5,7 +5,7 @@
     "dev": {
       "api_gateway_stage": "api",
       "environment_variables": {
-        "DATABASE_URL": "postgresql://neondb_owner:npg_FqJPdURhc6T3@ep-curly-salad-aqql91f3-pooler.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
+        "DATABASE_URL": "",
         "SQS_QUEUE_NAME": "skinsense-job-queue",
         "SQS_QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/123456789012/skinsense-job-queue"
       },
