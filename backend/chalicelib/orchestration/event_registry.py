@@ -1,9 +1,6 @@
 import os
 import json
 import uuid
-import os
-import json
-import uuid
 from datetime import datetime
 from chalicelib.db import SessionLocal
 from chalicelib.orchestration.logging import EventDetailLogger

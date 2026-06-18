@@ -2,7 +2,7 @@ from chalice import Response
 from chalicelib.db import SessionLocal
 from chalicelib.models.silver.item_master import ItemMaster
 
-def get_item_master():
+def get_item_master_handler():
     """
     Endpoint to retrieve the list of items from the master table.
     """

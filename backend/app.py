@@ -10,11 +10,10 @@ import os
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'), override=True)
 
 # 2. Now import everything else that depends on DB
-from chalicelib.orchestration.sqs_registry import register_sqs_queue
 from chalicelib.db import init_db
 from chalicelib.orchestration.event_registry import register_events
-from chalicelib.routes.admin import register_admin_routes
-from chalicelib.routes.skin_data import get_item_master
+from chalicelib.orchestration.sqs_registry import register_sqs_queue
+from chalicelib.routes.route_registry import register_all_routes
 
 app = Chalice(app_name='skinsense-backend')
 
@@ -28,11 +27,14 @@ app.api.cors = CORSConfig(
 # Initialize database tables
 init_db()
 
-# Register schedules and routes
+# Register schedules and queues
 register_events(app)
-register_sqs_queue(app)
-register_admin_routes(app)
 
-@app.route('/skin-data/items', methods=['GET'], cors=True)
-def get_items():
-    return get_item_master()
+from chalicelib.orchestration.sqs_registry import sqs_consumer_logic
+
+@app.on_sqs_message(queue=os.environ.get('SQS_QUEUE_NAME'), batch_size=1, name='sqs-consumer')
+def sqs_consumer(event):
+    return sqs_consumer_logic(event)
+
+# Register all routes
+register_all_routes(app)

@@ -25,7 +25,7 @@ QUEUE_URL = os.environ.get('SQS_QUEUE_URL')
 
 sqs = boto3.client('sqs')
 
-def sqs_consumer(event):
+def sqs_consumer_logic(event):
     for record in event:
         message = json.loads(record.body)
         event_name = message.get('event')
@@ -55,8 +55,8 @@ def sqs_consumer(event):
             logger.error(f"No handler found for action: {event_name}")
 
 def register_sqs_queue(app):
-    # SQS Consumer
-    app.on_sqs_message(queue=os.environ.get('SQS_QUEUE_NAME'), batch_size=1)(sqs_consumer)
+    # Registration now handled in app.py
+    pass
 
 def send_to_queue(message_body, queue_url=None):
 
