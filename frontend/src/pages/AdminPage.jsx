@@ -6,7 +6,7 @@ export const AdminPanel = ({ eventList, triggerEvent, logs }) => (
     <div style={{ margin: '20px 0' }}>
       <h3>Available Events</h3>
       {eventList.map(event => (
-        <button key={event.action} onClick={() => triggerEvent(event.action)} style={{ marginRight: '10px' }}>
+        <button key={event.event} onClick={() => triggerEvent(event.event)} style={{ marginRight: '10px' }}>
           {event.name}
         </button>
       ))}

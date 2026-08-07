@@ -13,17 +13,17 @@ export default function App() {
   const [sortBy, setSortBy] = useState('name-asc');
 
   const eventList = [
-    { name: 'Sync Item Listings', action: 'cs_float_item_listings' },
-    { name: 'Test CSFloat Connection', action: 'cs_float_test_connection' }
+    { name: 'Sync Item Listings', event: 'cs_float_item_listings' },
+    { name: 'Test CSFloat Connection', event: 'cs_float_test_connection' }
   ];
 
-  const triggerEvent = async (action) => {
-    if (!window.confirm(`Trigger ${action}?`)) return;
+  const triggerEvent = async (event) => {
+    if (!window.confirm(`Trigger ${event}?`)) return;
     const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
     await fetch(`${apiBaseUrl}/events/sync`, { 
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action })
+      body: JSON.stringify({ event })
     });
   };
 

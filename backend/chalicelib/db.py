@@ -1,24 +1,18 @@
-import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from contextlib import contextmanager
-from dotenv import load_dotenv
+from chalicelib.utils.config import get_db_url
 
 # Define Base (does not need DB access)
 Base = declarative_base()
 
-# Robustly find .env in the backend/ directory
-# Assuming this file is in backend/chalicelib/db.py
-env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.env'))
-load_dotenv(dotenv_path=env_path)
+DB_URL = get_db_url()
 
-DATABASE_URL = os.environ.get('DATABASE_URL')
-
-if not DATABASE_URL:
-    raise ValueError(f"DATABASE_URL environment variable is not set. Looked in: {env_path}")
+if not DB_URL:
+    raise ValueError("DB_URL is not set.")
 
 # Create SQLAlchemy engine
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DB_URL)
 
 # SessionLocal will be used to create a new session for each request
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

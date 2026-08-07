@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import os
 
 # Load test-specific variables before the app loads
-# This ensures DATABASE_URL is set before chalicelib.db is imported
+# This ensures DB_URL is set before chalicelib.db is imported
 env_path = os.path.join(os.path.dirname(__file__), '.env.test')
 load_dotenv(env_path, override=True)
 

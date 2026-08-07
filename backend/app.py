@@ -30,9 +30,10 @@ init_db()
 # Register schedules and queues
 register_events(app)
 
+from chalicelib.utils.config import get_sqs_queue_name
 from chalicelib.orchestration.sqs_registry import sqs_consumer_logic
 
-@app.on_sqs_message(queue=os.environ.get('SQS_QUEUE_NAME'), batch_size=1, name='sqs-consumer')
+@app.on_sqs_message(queue=get_sqs_queue_name(), batch_size=1, name='sqs-consumer')
 def sqs_consumer(event):
     return sqs_consumer_logic(event)
 

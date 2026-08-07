@@ -10,7 +10,7 @@ def trigger_sync_handler(app):
     # Generate a unique event_id since it is a manual trigger
     event_id = str(uuid.uuid4())
     send_to_queue({
-        'action': action, 
+        'event': action, 
         'event_id': event_id
     })
     return Response(

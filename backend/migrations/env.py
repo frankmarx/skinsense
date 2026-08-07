@@ -7,6 +7,9 @@ from alembic import context
 # Add backend directory to sys.path to allow importing chalicelib
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
+
 from chalicelib.db import Base
 import chalicelib.models
 
@@ -21,8 +24,10 @@ if config.config_file_name is not None:
 # Set target_metadata for autogenerate support
 target_metadata = Base.metadata
 
+from chalicelib.utils.config import get_db_url
+
 def get_url():
-    return os.environ.get('DATABASE_URL')
+    return get_db_url()
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""

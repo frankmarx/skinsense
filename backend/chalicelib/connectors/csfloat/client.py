@@ -1,23 +1,23 @@
-import os
 import requests
 from typing import List, Optional
 from chalicelib.connectors.csfloat.schemas import Listing, ListingDetail
+from chalicelib.utils.config import get_csfloat_api_key
 
 # Configuration
 CSFLOAT_API_URL = "https://csfloat.com/api/v1/listings"
 CSFLOAT_PRICE_LIST_URL = "https://csfloat.com/api/v1/listings/price-list"
-CSFLOAT_API_KEY = os.environ.get('CSFLOAT_API_KEY')
 
 def get_item_listings() -> List[Listing]:
     """
     Retrieves the global price list for items from CSFloat.
     Maps raw JSON to Listing objects.
     """
-    if not CSFLOAT_API_KEY:
-        raise ValueError("CSFLOAT_API_KEY environment variable is not set.")
+    api_key = get_csfloat_api_key()
+    if not api_key:
+        raise ValueError("CSFLOAT_API_KEY environment variable or secret is not set.")
 
     headers = {
-        "Authorization": f"ApiKey {CSFLOAT_API_KEY}",
+        "Authorization": f"ApiKey {api_key}",
         "User-Agent": "Skinsense-Price-Aggregator/1.0"
     }
 
@@ -40,14 +40,15 @@ def get_item_listing_details(market_hash_name: str) -> List[ListingDetail]:
     Retrieves every active listing for a specific item from CSFloat.
     Maps raw JSON to ListingDetail objects.
     """
-    if not CSFLOAT_API_KEY:
-        raise ValueError("CSFLOAT_API_KEY environment variable is not set.")
+    api_key = get_csfloat_api_key()
+    if not api_key:
+        raise ValueError("CSFLOAT_API_KEY environment variable or secret is not set.")
 
     all_listings = []
     cursor = None
     
     headers = {
-        "Authorization": f"ApiKey {CSFLOAT_API_KEY}",
+        "Authorization": f"ApiKey {api_key}",
         "User-Agent": "Skinsense-Price-Aggregator/1.0"
     }
 
@@ -83,11 +84,12 @@ def test_connection():
     """
     Tests the connection to the CSFloat API by hitting the price-list endpoint.
     """
-    if not CSFLOAT_API_KEY:
+    api_key = get_csfloat_api_key()
+    if not api_key:
         return {"status": "error", "message": "API Key not set"}
 
     headers = {
-        "Authorization": f"ApiKey {CSFLOAT_API_KEY}",
+        "Authorization": f"ApiKey {api_key}",
         "User-Agent": "Skinsense-Price-Aggregator/1.0"
     }
 

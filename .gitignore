@@ -14,12 +14,13 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Environment variables (Secrets)
+# Environment variables (Secrets) - never commit real env files
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.test
+.env.development
+.env.production
+.env.*.local
 
 # IDEs and Editors
 .vscode/
@@ -35,4 +36,3 @@ Thumbs.db
 .chalice/config.json # Optional: usually kept, but sometimes ignored if local-only secrets are here. Keeping it tracked by default.
 */.chalice/deployed/*
 */.chalice/deployments/*
-backend/tests/.env.test

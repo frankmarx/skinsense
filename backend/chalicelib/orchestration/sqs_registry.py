@@ -1,9 +1,9 @@
 import datetime
 import boto3
 import json
-import os
 import uuid
 import logging
+from chalicelib.utils.config import get_sqs_queue_url
 from chalicelib.event_definition.csfloat_events import run_sqs_consumer, run_test_connection
 from chalicelib.orchestration.logging import JobDetailLogger
 
@@ -21,7 +21,7 @@ COMMAND_REGISTRY = {
     }
 }
 # Default queue configuration
-QUEUE_URL = os.environ.get('SQS_QUEUE_URL')
+QUEUE_URL = get_sqs_queue_url()
 
 sqs = boto3.client('sqs')
 
