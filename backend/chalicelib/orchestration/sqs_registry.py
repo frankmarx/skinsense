@@ -3,6 +3,7 @@ import json
 import logging
 from chalicelib.utils.config import get_sqs_queue_url
 from chalicelib.event_definition.csfloat_events import run_item_listings, run_test_connection
+from chalicelib.event_definition.skinport_events import run_sales_history
 from chalicelib.orchestration.logging import EventLogger
 
 logger = logging.getLogger('chalice')
@@ -11,6 +12,7 @@ logger = logging.getLogger('chalice')
 EVENT_REGISTRY = {
     'cs_float_item_listings': run_item_listings,
     'cs_float_test_connection': run_test_connection,
+    'skinport_sales_history': run_sales_history,
 }
 
 # Default queue configuration
