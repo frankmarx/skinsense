@@ -1,6 +1,9 @@
+import json
 import pytest
+import requests
 from chalicelib.orchestration.sqs_registry import EVENT_REGISTRY
 from chalicelib.orchestration.logging import EventLogger
+from chalicelib.connectors.skinport.client import SKINPORT_SALES_HISTORY_URL
 from chalicelib.db import get_db
 from chalicelib.models import JobLogDetails, EventLogDetails
 
@@ -18,6 +21,16 @@ def test_event_skinport_sales_history(db_session):
     event creation, job logging, and a real sales history fetch.
     No API key required (public endpoint, rate limited to 8 requests / 5 min).
     """
+    sample = requests.get(
+        SKINPORT_SALES_HISTORY_URL,
+        params={"app_id": 730, "currency": "USD", "market_hash_name": "AK-47 | Redline (Field-Tested)"},
+        headers={"Accept-Encoding": "br", "User-Agent": "Skinsense-Price-Aggregator/1.0"},
+        timeout=30,
+    )
+    sample.raise_for_status()
+    print("\n--- SkinPort /v1/sales/history sample response ---")
+    print(json.dumps(sample.json(), indent=2))
+
     handler = EVENT_REGISTRY['skinport_sales_history']
     event_logger = EventLogger(event_type='skinport_sales_history', source='test')
     event_logger.create_event()

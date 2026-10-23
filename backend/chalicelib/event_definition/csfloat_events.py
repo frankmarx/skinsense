@@ -1,4 +1,5 @@
 from chalicelib.loaders.csfloat.load_item_listings import CSFloatListingLoader
+from chalicelib.loaders.csfloat.load_item_listing_details import CSFloatListingDetailLoader
 from chalicelib.connectors.csfloat.client import test_connection
 import logging
 
@@ -19,6 +20,30 @@ def run_item_listings(event_logger):
 
     logger.info(f"Sync Result: {result}")
     return result
+
+def run_item_listing_details(event_logger, market_hash_names: list[str]):
+    """
+    Parameter-only event: callers must provide the items to fetch.
+    Each item costs multiple paginated API calls, so the scope is deliberate.
+    """
+    if not market_hash_names:
+        raise ValueError("market_hash_names is required for the cs_float_item_listing_details event")
+
+    logger.info(f"Starting listing detail sync... event: {event_logger.event_id}")
+    loader = CSFloatListingDetailLoader(datasource_id="1")
+
+    with event_logger.job(action='Extracting Item Listing Details'):
+        raw_data = loader.extract(market_hash_names)
+
+    with event_logger.job(action='Loading Bronze') as load_job_id:
+        loader.bronze_load(raw_data, job_id=load_job_id)
+
+    with event_logger.job(action='Transforming Silver'):
+        result = loader.silver_transform(raw_data, job_id=load_job_id)
+
+    logger.info(f"Listing Detail Sync Result: {result}")
+    return result
+
 
 def run_test_connection(event_logger):
     logger.info(f"Running CSFloat API connection test... event: {event_logger.event_id}")

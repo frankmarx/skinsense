@@ -95,18 +95,41 @@ When you run `chalice deploy`, the following resources are created:
 
 ### Database Migrations
 
-When you change a model in `backend/chalicelib/models/`, follow these two steps:
+Migrations are developed against a **Neon dev branch** (a copy of `main`) before a single clean migration is applied to production. The test suite also runs against this branch via `backend/chalicelib/tests/.env.test`.
 
-1. **Generate a migration script:**
-   ```bash
-   cd backend
-   ./venv/bin/alembic revision --autogenerate -m "description of change"
-   ```
+When you change a model in `backend/chalicelib/models/`, run from `backend/`:
 
-2. **Apply the migration to the database:**
-   ```bash
-   ./venv/bin/alembic upgrade head
-   ```
+```bash
+make update-test-database
+```
+
+This prompts for a migration message, then autogenerates and applies the migration against the dev branch (it prints the target host first, credentials masked). Run the tests to verify:
+
+```bash
+./venv/bin/python -m pytest chalicelib/tests -v
+```
+
+**Iteration rule — never stack draft migrations.** Alembic chains revisions, so multiple drafts generated while iterating would all have to run on production. If the model needs changes after a draft migration:
+
+1. Delete the draft migration file from `backend/migrations/versions/`.
+2. Reset the Neon dev branch from `main` in the Neon dashboard (instant, copy-on-write — the branch returns to the last production revision).
+3. Edit the model, then run `make update-test-database` again to regenerate a fresh single migration.
+
+When everything is confirmed, apply exactly one clean migration to production:
+
+```bash
+make update-prod-database
+```
+
+This shows the production host, asks for confirmation, runs `alembic upgrade head` (using `DB_URL` from `backend/.env`), and prints the landed revision via `alembic current`.
+
+Manual equivalents, if you ever need them:
+
+```bash
+cd backend
+DB_URL='<branch-url>' ./venv/bin/alembic revision --autogenerate -m "description of change"
+DB_URL='<branch-url>' ./venv/bin/alembic upgrade head
+```
 
 ---
 

@@ -2,7 +2,11 @@ import boto3
 import json
 import logging
 from chalicelib.utils.config import get_sqs_queue_url
-from chalicelib.event_definition.csfloat_events import run_item_listings, run_test_connection
+from chalicelib.event_definition.csfloat_events import (
+    run_item_listings,
+    run_item_listing_details,
+    run_test_connection,
+)
 from chalicelib.event_definition.skinport_events import run_sales_history
 from chalicelib.orchestration.logging import EventLogger
 
@@ -11,6 +15,7 @@ logger = logging.getLogger('chalice')
 # Event Registry for the SQS Consumer
 EVENT_REGISTRY = {
     'cs_float_item_listings': run_item_listings,
+    'cs_float_item_listing_details': run_item_listing_details,
     'cs_float_test_connection': run_test_connection,
     'skinport_sales_history': run_sales_history,
 }
@@ -42,7 +47,7 @@ def sqs_consumer_logic(event):
         logger.info(f"Executing job for event: {event_type} ({source}, event_id: {event_id})")
 
         try:
-            handler(event_logger)
+            handler(event_logger, **message.get('params', {}))
         except Exception as e:
             logger.error(f"Job for event {event_id} failed: {e}")
 

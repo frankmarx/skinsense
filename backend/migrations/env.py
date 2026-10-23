@@ -38,6 +38,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         version_table_schema='skinsense',
+        include_schemas=True,
     )
 
     with context.begin_transaction():
@@ -60,6 +61,7 @@ def run_migrations_online() -> None:
             connection=connection, 
             target_metadata=target_metadata, 
             version_table_schema='skinsense',
+            include_schemas=True,
         )
 
         with context.begin_transaction():

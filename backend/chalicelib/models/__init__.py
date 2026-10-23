@@ -8,3 +8,5 @@ from chalicelib.models.silver.item_day_listing import ItemDayListing
 from chalicelib.models.silver.item_listing_detail import ItemListingDetail
 from chalicelib.models.bronze.csfloat_listing import CSFloatListing
 from chalicelib.models.bronze.csfloat_listing_detail import CSFloatListingDetail
+from chalicelib.models.bronze.skinport_sales_history import SkinportSalesHistory
+from chalicelib.models.bronze.skinport_item import SkinportItem

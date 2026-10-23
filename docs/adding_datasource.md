@@ -2,6 +2,8 @@
 
 Follow these steps to add a new Public API as a datasource, based on the CSFloat and SkinPort implementations.
 
+The same steps apply when adding a new endpoint to an existing datasource: add the schema and client function to the existing connector folder, add the bronze model, and migrate — only the loader and event registration differ in name.
+
 ## 1. Connector Setup
 Create a new directory in `backend/chalicelib/connectors` named after the datasource. Inside this directory, create:
 - `schemas.py`: Define the shape of the data coming from the API using pydantic models.
@@ -16,12 +18,8 @@ Add new models in `backend/chalicelib/models/bronze`. These bronze models should
 
 Then:
 - Export the new model from `backend/chalicelib/models/__init__.py`.
-- Generate and apply an alembic migration so production gets the new tables:
-  ```bash
-  cd backend
-  ./venv/bin/alembic revision --autogenerate -m "add <datasource> bronze model"
-  ./venv/bin/alembic upgrade head
-  ```
+- Develop the migration on the Neon dev branch first: run `make update-test-database` from `backend/` (prompts for a message, autogenerates + applies against the test branch). If you iterate on the model, follow the delete-draft-file + reset-dev-branch rule described in the README's Database Migrations section before regenerating.
+- When confirmed, apply the single final migration to production with `make update-prod-database`.
 
 ## 3. Loaders
 Create a new directory in `backend/chalicelib/loaders` named after the datasource. For each function defined in `client.py`, create a corresponding file. In each file, define a class that extends `FeedLoader` and implements:

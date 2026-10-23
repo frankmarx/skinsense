@@ -22,3 +22,20 @@ class SalesHistoryEntry(BaseModel):
     last_7_days: SalesPeriodStats
     last_30_days: SalesPeriodStats
     last_90_days: SalesPeriodStats
+
+
+class Item(BaseModel):
+    """A single item's market data from SkinPort /v1/items."""
+    market_hash_name: str
+    version: Optional[str] = None
+    currency: str
+    suggested_price: Optional[float] = None
+    item_page: Optional[str] = None
+    market_page: Optional[str] = None
+    min_price: Optional[float] = None
+    max_price: Optional[float] = None
+    mean_price: Optional[float] = None
+    median_price: Optional[float] = None
+    quantity: int = 0
+    created_at: Optional[int] = None
+    updated_at: Optional[int] = None
