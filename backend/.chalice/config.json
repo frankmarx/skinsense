@@ -6,6 +6,9 @@
       "api_gateway_stage": "api",
       "environment_variables": {
         "DB_URL": "",
+        "COGNITO_CLIENT_ID": "",
+        "COGNITO_USER_POOL_ID": "",
+        "CSFLOAT_API_KEY": "",
         "SQS_QUEUE_NAME": "skinsense-job-queue",
         "SQS_QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/538712952225/skinsense-job-queue"
       },

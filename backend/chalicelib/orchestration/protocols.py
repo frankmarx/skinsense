@@ -1,6 +1,6 @@
 from typing import Protocol, Any
-from chalicelib.orchestration.logging import JobDetailLogger
+from chalicelib.orchestration.logging import EventLogger
 
-class JobHandler(Protocol):
-    def __call__(self, app: Any, job_id: str, logger: JobDetailLogger) -> Any:
+class EventHandler(Protocol):
+    def __call__(self, event_logger: EventLogger) -> Any:
         ...

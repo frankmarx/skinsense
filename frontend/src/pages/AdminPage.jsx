@@ -6,7 +6,7 @@ export const AdminPanel = ({ eventList, triggerEvent, logs }) => (
     <div style={{ margin: '20px 0' }}>
       <h3>Available Events</h3>
       {eventList.map(event => (
-        <button key={event.event} onClick={() => triggerEvent(event.event)} style={{ marginRight: '10px' }}>
+        <button key={event.event_type} onClick={() => triggerEvent(event.event_type)} style={{ marginRight: '10px' }}>
           {event.name}
         </button>
       ))}
@@ -19,9 +19,9 @@ export const AdminPanel = ({ eventList, triggerEvent, logs }) => (
       <tbody>
         {logs.map(log => (
           <tr key={log.id}>
-            <td>{log.event_name}</td>
+            <td>{log.action}</td>
             <td>{log.status}</td>
-            <td>{new Date(log.job_start_time).toLocaleString()}</td>
+            <td>{new Date(log.start_time).toLocaleString()}</td>
           </tr>
         ))}
       </tbody>

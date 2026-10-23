@@ -1,12 +1,10 @@
 import os
 import json
 import uuid
-from datetime import datetime
-from chalicelib.db import SessionLocal
-from chalicelib.orchestration.logging import EventDetailLogger
+from chalicelib.orchestration.logging import EventLogger
 from chalicelib.orchestration.sqs_registry import send_to_queue
 
-# Grouping jobs by frequency
+# Grouping events by frequency
 SCHEDULE_GROUPS = {
     'once_daily': ['cs_float_test_connection'],
     'twice_daily': ['cs_float_item_listings'],
@@ -19,7 +17,7 @@ def register_events(app):
     #     """
     #     AWS EventBridge trigger that runs every 12 hours.
     #     """
-    #     trigger_event(event, 'twice_daily', "Added twice-daily events to the queue.")
+    #     trigger_events('twice_daily')
     #     return {'status': 'orchestrated', 'group': 'twice_daily'}
     # @app.schedule('rate(24 hours)')
 
@@ -27,26 +25,19 @@ def register_events(app):
         """
         AWS EventBridge trigger that runs every 24 hours.
         """
-        trigger_event(event, 'once_daily', "Added once-daily events to the queue.")
+        trigger_events('once_daily')
         return {'status': 'orchestrated', 'group': 'once_daily'}
 
-def trigger_event(event, group_name, action_desc):
-    # EventBridge 'id' is in the top-level of the event object
-    event_id = event.get('id', str(uuid.uuid4()))
-    
-    # Use EventDetailLogger
-    logger = EventDetailLogger(action=action_desc, job_id=event_id)
-    logger.create_log_entry()
-    
-    trigger_jobs(group_name, event_id)
+def trigger_events(group_name):
+    for event_type in SCHEDULE_GROUPS.get(group_name, []):
+        enqueue_event(event_type, source='scheduled')
 
-def trigger_jobs(group_name, event_id):
-    jobs = SCHEDULE_GROUPS.get(group_name, [])
-    for event in jobs:
-        send_to_queue({
-            'event': event,
-            'event_id': event_id
-        })
-
-
-
+def enqueue_event(event_type, source):
+    event_logger = EventLogger(event_type=event_type, source=source)
+    event_logger.create_event()
+    send_to_queue({
+        'event_type': event_type,
+        'event_id': event_logger.event_id,
+        'source': source
+    })
+    return event_logger.event_id

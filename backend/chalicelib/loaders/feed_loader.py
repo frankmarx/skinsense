@@ -1,11 +1,9 @@
 from abc import ABC, abstractmethod
-from chalicelib.orchestration.logging import JobDetailLogger
 
 class FeedLoader(ABC):
-    def __init__(self, jobid: str, datasource_id: str, logger: JobDetailLogger):
+    def __init__(self, jobid: str, datasource_id: str):
         self.jobid = jobid
         self.datasource_id = datasource_id
-        self.logger = logger
 
     @abstractmethod
     def extract(self):

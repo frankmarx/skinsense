@@ -32,14 +32,15 @@ The backend is built using **AWS Chalice**, which deploys your code as a set of 
 
 ### Deployed AWS Resources
 When you run `chalice deploy`, the following resources are created:
-- **`skinsense-backend-dev-master_scheduler_twice_daily` (Lambda Function):** A single orchestrator function triggered by EventBridge (CloudWatch Events) that queues multiple batch jobs.
-- **`skinsense-backend-dev-handle_sqs_message` (Lambda Function):** The centralized SQS consumer function. It pulls jobs from the queue one-by-one using `batch_size=1` and dispatches them via the `COMMAND_REGISTRY`.
-- **`skinsense-backend-dev` (Lambda Function):** The main entry point for your REST API, handling requests from the frontend via API Gateway.
-- **`Rest API` (AWS API Gateway):** The front-door for your application, routing frontend HTTP requests to the appropriate backend Lambda functions.
+- **`skinsense-backend-dev-master_scheduler_twice_daily` (Lambda Function):** An orchestrator triggered by EventBridge on a twice-daily schedule, queuing batch jobs (e.g. CSFloat item listings).
+- **`skinsense-backend-dev-master_scheduler_once_daily` (Lambda Function):** An orchestrator triggered by EventBridge on a once-daily schedule, queuing batch jobs (e.g. CSFloat connection test).
+- **`skinsense-backend-dev-sqs-consumer` (Lambda Function):** The SQS consumer function. It pulls jobs from the queue one-by-one using `batch_size=1` and dispatches them via the command registry.
+- **`Rest API` (AWS API Gateway):** The public HTTP endpoint the frontend calls; routes each request to the correct handler. A separate service from Lambda in the AWS console (search "API Gateway").
+- **`skinsense-backend-dev` (Lambda Function):** Runs your Chalice app code, invoked by API Gateway for each incoming request.
 
 ### Prerequisites
 - Python 3.9, 3.10, or 3.11 installed
-- PostgreSQL database instance (or Docker)
+- PostgreSQL database instance
 
 ### Installation Steps
 
@@ -65,29 +66,32 @@ When you run `chalice deploy`, the following resources are created:
    pip install -r requirements.txt
    ```
 
-4. **Database Configuration:**
-   Chalice reads the database URI from the `DATABASE_URL` environment variable. Ensure this is configured locally or in your Chalice stage config.
-   - Example Database URI format: `postgresql://username:password@localhost:5432/skinsense`
+4. **Set up Environment Variables:**
+   Copy the example file into a local `.env` and populate it with your values:
+   ```bash
+   cp .env.example .env
+   ```
 
-   Set the environment variable locally before running:
-   - **macOS/Linux:**
-     ```bash
-     export DATABASE_URL="postgresql://username:password@localhost:5432/skinsense"
-     ```
-   - **Windows CMD:**
-     ```cmd
-     set DATABASE_URL=postgresql://username:password@localhost:5432/skinsense
-     ```
-   - **Windows PowerShell:**
-     ```powershell
-     $env:DATABASE_URL="postgresql://username:password@localhost:5432/skinsense"
-     ```
+   The variables defined in `.env.example`:
+
+   | Variable | Description | Sensitive? | Production source |
+   |---|---|---|---|
+   | `DB_URL` | PostgreSQL connection string (e.g. `postgresql://user:pass@host:5432/db`) | Yes — credential | AWS Secrets Manager |
+   | `CSFLOAT_API_KEY` | API key authenticating requests to the CSFloat API | Yes — credential | AWS Secrets Manager |
+   | `COGNITO_CLIENT_ID` | Cognito App Client ID, used by the frontend for auth flows | No — public identifier | AWS Secrets Manager |
+   | `COGNITO_USER_POOL_ID` | Cognito User Pool ID, used for auth configuration | No — public identifier | AWS Secrets Manager |
+   | `SQS_QUEUE_NAME` | Name of the SQS queue that batch jobs are sent to | No — resource identifier | `.chalice/config.json` (plaintext Lambda env var) |
+   | `SQS_QUEUE_URL` | URL of the SQS queue that batch jobs are sent to | No — resource identifier | `.chalice/config.json` (plaintext Lambda env var) |
+
+   > **Note:** In production (Lambda), the sensitive values live in AWS Secrets Manager under the `skinsense/production/config` secret, while the non-sensitive `SQS_*` values are set as plaintext Lambda environment variables via `.chalice/config.json`. Locally, all of them are read from your `.env` file instead.
+   >
+   > ⚠️ The `SQS_*` variables have **no Secrets Manager fallback** — they are read only from the environment. They must always be set to real values (never empty), or the SQS consumer and job queueing will break.
 
 5. **Start the local backend server:**
    ```bash
    chalice local --port 8000
    ```
-    *Your API will now be running and accessible at `http://127.0.0.1:8000/prices`.*
+    *Your API will now be running and accessible at `http://127.0.0.1:8000` (e.g. the `/skin-data/items` endpoint).*
 
 ### Database Migrations
 
@@ -141,35 +145,22 @@ The frontend is a lightweight, responsive dashboard built with **Vite**, **React
 
 ---
 
-## 🛠️ Local PostgreSQL Development (Docker Option)
-
-If you don't have a PostgreSQL server installed on your system, you can quickly spin up a containerized DB using Docker:
-
-```bash
-docker run --name skinsense-db \
-  -e POSTGRES_USER=admin \
-  -e POSTGRES_PASSWORD=secretpass \
-  -e POSTGRES_DB=skinsense \
-  -p 5432:5432 \
-  -d postgres:15
-```
-
-Using this container, your environment connection string will be:
-`DATABASE_URL="postgresql://admin:secretpass@127.0.0.1:5432/skinsense"`
-
----
-
 ## ⚙️ Architecture & Features
 
-### 🕒 Scheduled CRON Aggregator
-In `app.py`, the `@app.schedule('rate(12 hours)')` decorator instructs AWS Lambda/CloudWatch to invoke the `fetch_and_update_prices` function every 12 hours.
-- It pulls the latest index from the external **CSGOBackpack API**.
-- Includes complete commented boilerplate demonstrating safe item parsing and database transactional upserts (`INSERT ... ON CONFLICT DO UPDATE`).
+### 🕒 Scheduled Data Aggregation
+EventBridge scheduled triggers (defined in `backend/chalicelib/orchestration/event_registry.py`) enqueue batch jobs to an SQS queue on a recurring basis, grouped by frequency:
+- **`once_daily`**: runs the CSFloat connection test each day.
+- **`twice_daily`**: pulls the latest item listings from the **CSFloat API**.
 
-### 📡 Fault-Tolerant REST API Endpoint
-The `/prices` endpoint has a fallback mechanism:
-- If the database is empty, configuring, or offline, the API **will not crash**. It gracefully yields simulated dummy datasets containing premium items (e.g. M9 Bayonet, Karambit Doppler, AWP Asiimov) so frontend development can continue unimpeded.
+A dedicated `sqs-consumer` Lambda pulls jobs from the queue one at a time (`batch_size=1`) and dispatches each to its handler via the command registry, keeping each sync isolated and independently retryable.
+
+### 📡 REST API Endpoints
+- **`GET /skin-data/items`** — returns the current item master list from the database.
+- **`POST /events/sync`** — manually queues a sync job (e.g. CSFloat listings).
+- **`GET /logs`** — returns recent job log entries.
+- **`GET /config`** — returns frontend auth configuration (Cognito IDs).
 
 ### 🎨 Minimalist Frontend UI Theme
 - **Dual Theme Support:** Fully reactive Dark & Light mode using standard CSS custom property injection. Responsive buttons allow quick toggle on top header.
 - **Search & Sort Logic:** In-memory, highly-efficient filtering of items as you type, with select controls to sort prices ascending/descending or alphabetical.
+

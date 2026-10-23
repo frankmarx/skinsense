@@ -2,10 +2,11 @@ import pytest
 from dotenv import load_dotenv
 import os
 
-# Load test-specific variables before the app loads
-# This ensures DB_URL is set before chalicelib.db is imported
-env_path = os.path.join(os.path.dirname(__file__), '.env.test')
-load_dotenv(env_path, override=True)
+# Load base .env first, then .env.test with override so test-specific
+# values (e.g. DB_URL pointing to a test DB branch) take precedence.
+base_dir = os.path.dirname(__file__)
+load_dotenv(os.path.join(base_dir, '..', '.env'))
+load_dotenv(os.path.join(base_dir, '.env.test'), override=True)
 
 from sqlalchemy import text
 from chalicelib.db import init_db, engine

@@ -10,17 +10,14 @@ from chalicelib.loaders.feed_loader import FeedLoader
 
 class CSFloatListingLoader(FeedLoader):
     def extract(self):
-        self.logger.create_log_entry(status='Extracting')
         listings: list[Listing] = get_item_listings()
-        self.logger.update_log_entry(status='Extracting', success=True)
         return listings
 
     @db_transaction
     def bronze_load(self, raw_data, db=None):
         if not raw_data:
             return []
-        
-        self.logger.create_log_entry(status='Loading Bronze')
+
         # Load into CSFloatListing bronze table
         bronze_records = [
             CSFloatListing(
@@ -32,12 +29,10 @@ class CSFloatListingLoader(FeedLoader):
             for listing in raw_data
         ]
         db.add_all(bronze_records)
-        self.logger.update_log_entry(status='Loading Bronze', success=True)
         return raw_data
 
     @db_transaction
     def silver_transform(self, raw_data, db=None):
-        self.logger.create_log_entry(status='Transforming Silver')
         # Source: Bronze table
         bronze_records = db.query(CSFloatListing).filter(
             CSFloatListing.job_id == self.jobid
@@ -88,8 +83,7 @@ class CSFloatListingLoader(FeedLoader):
                 }
             )
             db.execute(upsert_listing)
-        
-        self.logger.update_log_entry(status='Transforming Silver', success=True)
+
         return {"status": "success", "processed_items": len(raw_data)}
 
 
