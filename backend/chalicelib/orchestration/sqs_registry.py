@@ -1,7 +1,5 @@
-import datetime
 import boto3
 import json
-import uuid
 import logging
 from chalicelib.utils.config import get_sqs_queue_url
 from chalicelib.event_definition.csfloat_events import run_item_listings, run_test_connection
@@ -13,7 +11,9 @@ logger = logging.getLogger('chalice')
 EVENT_REGISTRY = {
     'cs_float_item_listings': run_item_listings,
     'cs_float_test_connection': run_test_connection,
-}# Default queue configuration
+}
+
+# Default queue configuration
 QUEUE_URL = get_sqs_queue_url()
 
 sqs = boto3.client('sqs')

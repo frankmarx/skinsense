@@ -14,14 +14,14 @@ class CSFloatListingLoader(FeedLoader):
         return listings
 
     @db_transaction
-    def bronze_load(self, raw_data, db=None):
+    def bronze_load(self, raw_data, job_id: str, db=None):
         if not raw_data:
             return []
 
         # Load into CSFloatListing bronze table
         bronze_records = [
             CSFloatListing(
-                job_id=self.jobid,
+                job_id=job_id,
                 market_hash_name=listing.market_hash_name,
                 quantity=listing.quantity,
                 min_price=listing.price
@@ -32,10 +32,10 @@ class CSFloatListingLoader(FeedLoader):
         return raw_data
 
     @db_transaction
-    def silver_transform(self, raw_data, db=None):
-        # Source: Bronze table
+    def silver_transform(self, raw_data, job_id: str, db=None):
+        # Source: Bronze table (stamped by the loading job)
         bronze_records = db.query(CSFloatListing).filter(
-            CSFloatListing.job_id == self.jobid
+            CSFloatListing.job_id == job_id
         ).all()
  
         if not bronze_records:

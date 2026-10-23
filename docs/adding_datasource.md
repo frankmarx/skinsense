@@ -13,12 +13,8 @@ Add new models in `backend/chalicelib/models/bronze`. These bronze models should
 ## 3. Loaders
 Create a new directory in `backend/chalicelib/loaders` named after the datasource. For each function defined in `client.py`, create a corresponding file. In each file, define a class that extends `FeedLoader` and implements:
 - `extract()`: Use the connector client to fetch data from the API.
-- `bronze_load()`: Load the API data directly into the corresponding bronze model, tagging it with the `FeedLoader`'s `job_id`.
-- `silver transform()`: Transform the data from the bronze table into a shape that fits the silver table.
+- `bronze_load(raw_data, job_id)`: Load the API data directly into the corresponding bronze model, tagging it with the provided `job_id`.
+- `silver_transform(raw_data, job_id)`: Transform the data from the bronze table (selected by `job_id`) into a shape that fits the silver table.
 
 ## 4. Events
-Create a new file in `backend/events` named `{datasource_name}_events`. Define a function that:
-1. Creates a `Loader`.
-2. Extracts the data.
-3. Loads it into bronze.
-4. Transforms it into silver.
+Create a new file in `backend/chalicelib/event_definition` named `{datasource_name}_events`. Define a function that accepts an `EventLogger`, runs each stage of the loader inside `event_logger.job(action=...)` blocks, and lets the job context manager record Completed/Failed status for each stage.

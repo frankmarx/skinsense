@@ -1,5 +1,6 @@
 import datetime
 import uuid
+from contextlib import contextmanager
 from chalicelib.db import SessionLocal
 from chalicelib.models.common.job_log_details import JobLogDetails
 from chalicelib.models.common.event_log_details import EventLogDetails
@@ -212,3 +213,33 @@ class EventLogger:
             job.status = final_status
             job.end_time = datetime.datetime.now()
             db.commit()
+
+    @contextmanager
+    def job(self, action):
+        """Run a block of work as a job, handling its lifecycle automatically.
+
+        Creates a job (status 'Running') on entry, then marks it 'Completed'
+        when the block exits cleanly or 'Failed' and re-raises when the block
+        raises. Because a failed block aborts the caller, jobs for later
+        stages are never created, leaving an accurate audit trail.
+
+        Args:
+            action (str): Description of the work the job performs
+                (e.g. 'Extracting Item Listings').
+
+        Yields:
+            str: The generated job ID, for stamping produced records.
+
+        Raises:
+            RuntimeError: Propagates any error from the block body after
+                marking the job 'Failed'. May also raise from create_job()
+                (event missing, or a job already in progress) or
+                finish_job() (job already finished) on lifecycle misuse.
+        """
+        job_id = self.create_job(action)
+        try:
+            yield job_id
+        except Exception:
+            self.finish_job(job_id, success=False)
+            raise
+        self.finish_job(job_id, success=True)

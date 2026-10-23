@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 
 class FeedLoader(ABC):
-    def __init__(self, jobid: str, datasource_id: str):
-        self.jobid = jobid
+    def __init__(self, datasource_id: str):
         self.datasource_id = datasource_id
 
     @abstractmethod
@@ -10,11 +9,11 @@ class FeedLoader(ABC):
         pass
 
     @abstractmethod
-    def bronze_load(self, raw_data):
+    def bronze_load(self, raw_data, job_id: str):
         pass
 
     @abstractmethod
-    def silver_transform(self, raw_data):
+    def silver_transform(self, raw_data, job_id: str):
         pass
 
     def log(self, message):

@@ -11,14 +11,14 @@ class CSFloatListingDetailLoader(FeedLoader):
         data = get_item_listing_details() 
         return data
 
-    def bronze_load(self, raw_data):
+    def bronze_load(self, raw_data, job_id: str):
         if not raw_data:
             return []
-            
+
         with get_db() as db:
             bronze_records = [
                 CSFloatListingDetail(
-                    job_id=self.jobid,
+                    job_id=job_id,
                     listing_id=item.get('id') if isinstance(item, dict) else getattr(item, 'id', None),
                     created_at=item.get('created_at') if isinstance(item, dict) else getattr(item, 'created_at', None),
                     type=item.get('type') if isinstance(item, dict) else getattr(item, 'type', None),
@@ -40,7 +40,7 @@ class CSFloatListingDetailLoader(FeedLoader):
         self.log(f"Loaded {len(raw_data)} records into csfloat_listing_detail bronze table.")
         return raw_data
 
-    def silver_transform(self):
+    def silver_transform(self, raw_data, job_id: str):
         self.log("Transforming item listing detail data from bronze (not implemented yet)")
         # Implement transformation logic: Query CSFloatListingDetail -> Load into silver
         return {"status": "success"}

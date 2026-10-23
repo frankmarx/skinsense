@@ -1,11 +1,18 @@
 import pytest
-from unittest.mock import patch, MagicMock
-from chalicelib.event_definition.csfloat_events import run_item_listings
-from chalicelib.connectors.csfloat import client as csfloat_client
-from chalicelib.connectors.csfloat.schemas import Listing
+from unittest.mock import patch
 from sqlalchemy import select
+from chalicelib.orchestration.sqs_registry import EVENT_REGISTRY
+from chalicelib.orchestration.logging import EventLogger
+from chalicelib.connectors.csfloat.schemas import Listing
 from chalicelib.db import get_db
-from chalicelib.models import ItemMaster, ItemDayListing, Datasource
+from chalicelib.models import (
+    ItemMaster,
+    ItemDayListing,
+    Datasource,
+    CSFloatListing,
+    JobLogDetails,
+    EventLogDetails,
+)
 
 # --- SAMPLE DATA ---
 SAMPLE_LISTINGS = [
@@ -19,58 +26,92 @@ def db_session():
     with get_db() as session:
         yield session
 
-@pytest.fixture
-def mock_app():
-    """Provides a mock app object with a log method."""
-    app = MagicMock()
-    app.log = MagicMock()
-    return app
 
-def test_run_item_listings_success(mock_app, db_session):
+def test_event_cs_float_item_listings(db_session):
     """
-    Tests that run_item_listings successfully extracts,
-    loads into bronze, and transforms into silver.
+    Tests the full cs_float_item_listings event: event creation, job logging,
+    and the extract -> bronze load -> silver transform pipeline.
     """
-    # Patch the CSFloat client to return sample listings
-    with patch('chalicelib.loaders.csfloat.load_item_listings.get_item_listings', return_value=SAMPLE_LISTINGS):
-        # Setup: Ensure the datasource exists
-        ds = Datasource(datasource_id="1", name="CSFloat", url="https://csfloat.com")
-        db_session.add(ds)
+    ds = db_session.query(Datasource).filter(Datasource.datasource_id == "1").first()
+    if not ds:
+        db_session.add(Datasource(datasource_id="1", name="CSFloat", url="https://csfloat.com"))
         db_session.commit()
-        
-        job_id = "test-job-123"
-        result = run_item_listings(mock_app, job_id)
-        
-        # Verify result
-        assert result["status"] == "success"
-        assert result["processed_items"] == 2
-        
-        # Verify that logs were called
-        mock_app.log.info.assert_any_call(f"Starting price sync... job_id: {job_id}")
-        
-        # Verify database state
-        # 1. Check ItemMaster
-        items = db_session.execute(select(ItemMaster)).scalars().all()
-        assert len(items) == 2
-        item_names = {item.full_name for item in items}
-        assert "AK-47 | Redline (Field-Tested)" in item_names
-        assert "AWP | Asiimov (Field-Tested)" in item_names
-        
-        # 2. Check ItemDayListing
-        listings = db_session.execute(select(ItemDayListing)).scalars().all()
-        assert len(listings) == 2
 
-def test_public_api_access():
+    EVENT_TYPE = 'cs_float_item_listings'
+
+    handler = EVENT_REGISTRY[EVENT_TYPE]
+    event_logger = EventLogger(event_type=EVENT_TYPE, source='test')
+    event_logger.create_event()
+
+    with patch(
+        'chalicelib.loaders.csfloat.load_item_listings.get_item_listings',
+        return_value=SAMPLE_LISTINGS,
+    ):
+        result = handler(event_logger)
+
+    assert result["status"] == "success"
+    assert result["processed_items"] == 2
+
+    event = db_session.query(EventLogDetails).filter(
+        EventLogDetails.event_id == event_logger.event_id
+    ).one()
+    assert event.source == 'test'
+    assert event.event_type == EVENT_TYPE
+    assert event.start_time is not None
+
+    jobs = db_session.query(JobLogDetails).filter(
+        JobLogDetails.event_id == event_logger.event_id
+    ).order_by(JobLogDetails.start_time, JobLogDetails.id).all()
+    assert [job.action for job in jobs] == [
+        'Extracting Item Listings',
+        'Loading Bronze',
+        'Transforming Silver',
+    ]
+    assert all(job.status == 'Completed' for job in jobs)
+    assert all(job.end_time is not None for job in jobs)
+
+    bronze_records = db_session.query(CSFloatListing).filter(
+        CSFloatListing.job_id == jobs[1].job_id
+    ).all()
+    assert len(bronze_records) == 2
+
+    items = db_session.execute(select(ItemMaster)).scalars().all()
+    item_names = {item.full_name for item in items}
+    assert "AK-47 | Redline (Field-Tested)" in item_names
+    assert "AWP | Asiimov (Field-Tested)" in item_names
+
+    listings = db_session.query(ItemDayListing).filter(
+        ItemDayListing.datasource_id == "1"
+    ).all()
+    assert len(listings) >= 2
+
+
+def test_event_cs_float_test_connection(db_session):
     """
-    Integration test to ensure the CSFloat public API is accessible.
+    Tests the cs_float_test_connection event against the live CSFloat API:
+    event creation, job logging, and a real connection check.
     Requires CSFLOAT_API_KEY to be set in the environment.
     """
-    try:
-        listings = csfloat_client.get_item_listings()
-        # We don't assert on content since the API is live, 
-        # just that it doesn't raise an exception and returns a list.
-        assert isinstance(listings, list)
-    except ValueError as e:
-        pytest.fail(f"API Key missing or invalid: {e}")
-    except Exception as e:
-        pytest.fail(f"API request failed: {e}")
+    handler = EVENT_REGISTRY['cs_float_test_connection']
+    event_logger = EventLogger(event_type='cs_float_test_connection', source='test')
+    event_logger.create_event()
+
+    result = handler(event_logger)
+
+    assert result["status"] == "success"
+
+    event = db_session.query(EventLogDetails).filter(
+        EventLogDetails.event_id == event_logger.event_id
+    ).one()
+    assert event.source == 'test'
+    assert event.event_type == 'cs_float_test_connection'
+    assert event.start_time is not None
+
+    jobs = db_session.query(JobLogDetails).filter(
+        JobLogDetails.event_id == event_logger.event_id
+    ).all()
+    assert len(jobs) == 1
+    assert jobs[0].action == 'Testing Connection'
+    assert jobs[0].status == 'Completed'
+    assert jobs[0].end_time is not None
+
