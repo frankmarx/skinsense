@@ -195,7 +195,7 @@ def test_event_cs_float_test_connection(db_session):
         JobLogDetails.event_id == event_logger.event_id
     ).all()
     assert len(jobs) == 1
-    assert jobs[0].action == 'Testing Connection'
+    assert jobs[0].action == 'Testing CSFloat Connection'
     assert jobs[0].status == 'Completed'
     assert jobs[0].end_time is not None
 

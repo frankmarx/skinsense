@@ -4,6 +4,8 @@
   "stages": {
     "dev": {
       "api_gateway_stage": "api",
+      "autogen_policy": false,
+      "iam_policy_file": "dev-policy.json",
       "environment_variables": {
         "DB_URL": "",
         "COGNITO_CLIENT_ID": "",

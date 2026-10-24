@@ -8,6 +8,7 @@ from chalicelib.event_definition.csfloat_events import (
     run_test_connection,
 )
 from chalicelib.event_definition.skinport_events import run_sales_history
+from chalicelib.event_definition.test_events import run_test_api_connectors
 from chalicelib.orchestration.logging import EventLogger
 
 logger = logging.getLogger('chalice')
@@ -16,8 +17,8 @@ logger = logging.getLogger('chalice')
 EVENT_REGISTRY = {
     'cs_float_item_listings': run_item_listings,
     'cs_float_item_listing_details': run_item_listing_details,
-    'cs_float_test_connection': run_test_connection,
     'skinport_sales_history': run_sales_history,
+    'test_api_connectors': run_test_api_connectors,
 }
 
 # Default queue configuration

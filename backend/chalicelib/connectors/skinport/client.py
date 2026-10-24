@@ -67,3 +67,20 @@ def get_items(app_id: int = 730, currency: str = "USD", tradable: bool = True) -
     }
 
     return [Item(**item) for item in _request(SKINPORT_ITEMS_URL, params)]
+
+
+def test_connection():
+    """
+    Tests the connection to the SkinPort API by hitting the items endpoint.
+    """
+    headers = {
+        "Accept-Encoding": "br",
+        "User-Agent": "Skinsense-Price-Aggregator/1.0"
+    }
+
+    try:
+        response = requests.get(SKINPORT_ITEMS_URL, headers=headers)
+        response.raise_for_status()
+        return {"status": "success", "status_code": response.status_code}
+    except requests.exceptions.RequestException as e:
+        return {"status": "error", "message": str(e)}

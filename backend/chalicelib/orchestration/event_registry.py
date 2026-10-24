@@ -32,12 +32,13 @@ def trigger_events(group_name):
     for event_type in SCHEDULE_GROUPS.get(group_name, []):
         enqueue_event(event_type, source='scheduled')
 
-def enqueue_event(event_type, source):
+def enqueue_event(event_type, source, params=None):
     event_logger = EventLogger(event_type=event_type, source=source)
     event_logger.create_event()
     send_to_queue({
         'event_type': event_type,
         'event_id': event_logger.event_id,
-        'source': source
+        'source': source,
+        'params': params or {}
     })
     return event_logger.event_id

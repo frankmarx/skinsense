@@ -48,7 +48,7 @@ def run_item_listing_details(event_logger, market_hash_names: list[str]):
 def run_test_connection(event_logger):
     logger.info(f"Running CSFloat API connection test... event: {event_logger.event_id}")
 
-    with event_logger.job(action='Testing Connection'):
+    with event_logger.job(action='Testing CSFloat Connection'):
         result = test_connection()
         if result.get("status") != "success":
             raise RuntimeError(f"Connection test failed: {result.get('message', result)}")

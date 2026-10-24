@@ -1,5 +1,6 @@
 import sys
 import os
+import logging
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from chalice import Chalice, CORSConfig
@@ -16,6 +17,15 @@ from chalicelib.orchestration.sqs_registry import register_sqs_queue
 from chalicelib.routes.route_registry import register_all_routes
 
 app = Chalice(app_name='skinsense-backend')
+
+# Chalice only configures the app logger ('skinsense-backend', level ERROR);
+# event handlers log to the 'chalice' logger, so configure it explicitly
+# for INFO logs to reach CloudWatch
+_chalice_logger = logging.getLogger('chalice')
+_chalice_logger.setLevel(logging.INFO)
+_chalice_logger.propagate = False
+if not _chalice_logger.handlers:
+    _chalice_logger.addHandler(logging.StreamHandler(sys.stdout))
 
 # Apply CORS config to allow frontend access
 app.api.cors = CORSConfig(
