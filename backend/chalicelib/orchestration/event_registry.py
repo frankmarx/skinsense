@@ -12,7 +12,7 @@ SCHEDULE_GROUPS = {
 
 def register_events(app):
     # Scheduled Orchestrators
-    @app.schedule('rate(12 hours)')
+    # @app.schedule('rate(12 hours)')
     # def master_scheduler_twice_daily(event):
     #     """
     #     AWS EventBridge trigger that runs every 12 hours.
