@@ -1,4 +1,5 @@
 from sqlalchemy import Column, String, Float, Integer, Date, ForeignKey, ForeignKeyConstraint
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from chalicelib.db import Base
 
@@ -11,6 +12,8 @@ class ItemDayListing(Base):
     
     listings_count = Column(Integer, default=0)
     min_price = Column(Float)
+    ins_job_id = Column(UUID(as_uuid=True), nullable=False)
+    upd_job_id = Column(UUID(as_uuid=True), nullable=False)
 
     __table_args__ = (
         ForeignKeyConstraint(

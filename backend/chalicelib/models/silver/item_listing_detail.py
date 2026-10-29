@@ -1,4 +1,5 @@
 from sqlalchemy import Column, String, Float, Date, DateTime, Boolean, Integer, ForeignKey, ForeignKeyConstraint
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from chalicelib.db import Base
 
@@ -20,6 +21,8 @@ class ItemListingDetail(Base):
     float_value = Column(Float)
     is_stattrak = Column(Boolean)
     is_souvenir = Column(Boolean)
+    ins_job_id = Column(UUID(as_uuid=True), nullable=False)
+    upd_job_id = Column(UUID(as_uuid=True), nullable=False)
 
     __table_args__ = (
         ForeignKeyConstraint(

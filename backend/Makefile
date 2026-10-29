@@ -13,13 +13,12 @@ update-test-database:
 	DB_URL="$$TEST_URL" ./venv/bin/alembic upgrade head
 
 # Apply the newest migration revision to the PRODUCTION database
-# (DB_URL from .env). Asks for confirmation first.
+# (URL resolved from AWS Secrets Manager via chalicelib.utils.config.get_db_url).
+# Asks for confirmation first.
 update-prod-database:
-	@PROD_URL=$$(sed -n 's/^DB_URL=//p' .env); \
-	if [ -z "$$PROD_URL" ]; then echo "Error: DB_URL not set in .env"; exit 1; fi; \
-	HOST=$$(echo "$$PROD_URL" | sed -E 's#.*@([^/?]+).*#\1#'); \
-	echo "Target: PRODUCTION ($$HOST)"; \
+	@PROD_HOST=$$(./venv/bin/python -c "from chalicelib.utils.config import get_db_url; print(get_db_url().split('@')[1])"); \
+	echo "Target: PRODUCTION ($$PROD_HOST)"; \
 	printf "Apply the newest migration to production? [y/N]: "; read -r CONFIRM; \
 	if [ "$$CONFIRM" != "y" ] && [ "$$CONFIRM" != "Y" ]; then echo "Aborted."; exit 1; fi; \
-	DB_URL="$$PROD_URL" ./venv/bin/alembic upgrade head && \
-	DB_URL="$$PROD_URL" ./venv/bin/alembic current
+	./venv/bin/alembic upgrade head && \
+	./venv/bin/alembic current

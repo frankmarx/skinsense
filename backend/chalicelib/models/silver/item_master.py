@@ -1,4 +1,5 @@
 from sqlalchemy import Column, String, Boolean, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from chalicelib.db import Base
 
@@ -12,6 +13,8 @@ class ItemMaster(Base):
     item_type = Column(String)
     wear = Column(String)
     stat_track = Column(Boolean)
+    ins_job_id = Column(UUID(as_uuid=True), nullable=False)
+    upd_job_id = Column(UUID(as_uuid=True), nullable=False)
 
     # Relationships
     day_sales = relationship("ItemDaySales", back_populates="item")
